@@ -8,6 +8,7 @@ import (
 	"runtime"
 	"strings"
 
+	"github.com/b1naryth1ef/jambon"
 	"github.com/b1naryth1ef/jambon/tacview"
 )
 
@@ -65,7 +66,7 @@ func ImportFile(target string) error {
 		return err
 	}
 
-	file, err := os.Open(target)
+	file, err := jambon.OpenReadableTacView(target)
 	if err != nil {
 		return err
 	}
