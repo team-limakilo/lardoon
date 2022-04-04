@@ -1,6 +1,7 @@
 package lardoon
 
 import (
+	"fmt"
 	"log"
 	"os"
 	"path/filepath"
@@ -78,13 +79,33 @@ func ImportFile(target string) error {
 
 	rootObject := reader.Header.InitialTimeFrame.Get(0)
 
+	recordingTime := rootObject.Get("RecordingTime")
+	if recordingTime == nil {
+		return fmt.Errorf("Malformed Tacview file: missing property: RecordingTime")
+	}
+
+	title := rootObject.Get("Title")
+	if title == nil {
+		return fmt.Errorf("Malformed Tacview file: missing property Title")
+	}
+
+	dataSource := rootObject.Get("DataSource")
+	if dataSource == nil {
+		return fmt.Errorf("Malformed Tacview file: missing property: DataSource")
+	}
+
+	dataRecorder := rootObject.Get("DataRecorder")
+	if dataRecorder == nil {
+		return fmt.Errorf("Malformed Tacview file: missing property: DataRecorder")
+	}
+
 	replayId, err := createReplay(
 		target,
 		reader.Header.ReferenceTime.String(),
-		rootObject.Get("RecordingTime").Value,
-		rootObject.Get("Title").Value,
-		rootObject.Get("DataSource").Value,
-		rootObject.Get("DataRecorder").Value,
+		recordingTime.Value,
+		title.Value,
+		dataSource.Value,
+		dataRecorder.Value,
 		int(stat.Size()),
 	)
 	if err != nil {
@@ -147,7 +168,12 @@ func ImportFile(target string) error {
 								continue
 							}
 							pilot := pilotProp.Value
-							group := object.Get("Group").Value
+
+							groupProp := object.Get("Group")
+							if groupProp == nil {
+								continue
+							}
+							group := pilotProp.Value
 
 							result := nonHumanSlotRe.FindAllStringSubmatch(pilot, -1)
 							if len(result) > 0 && strings.HasPrefix(group, result[0][1]) {
