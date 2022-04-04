@@ -3,6 +3,7 @@ package main
 import (
 	"log"
 	"os"
+	"time"
 
 	"github.com/b1naryth1ef/lardoon"
 	"github.com/urfave/cli/v2"
@@ -34,6 +35,27 @@ func doPrune(c *cli.Context) error {
 	}
 
 	return lardoon.PruneReplays(!c.Bool("no-dry-run"))
+}
+
+func doDaemon(c *cli.Context) error {
+	err := lardoon.InitDatabase(c.Path("db"))
+	if err != nil {
+		return err
+	}
+
+	for {
+		err = lardoon.ImportPath(c.Path("import-path"))
+		if err != nil {
+			log.Printf("[daemon] Import error: %v", err)
+		}
+
+		err = lardoon.PruneReplays(false)
+		if err != nil {
+			log.Printf("[daemon] Prune error: %v", err)
+		}
+
+		time.Sleep(time.Duration(c.Int64("time-period")) * time.Second)
+	}
 }
 
 func main() {
@@ -80,6 +102,26 @@ func main() {
 						Name:  "bind",
 						Usage: "hostname/port to bind the server on",
 						Value: "localhost:3883",
+					},
+				},
+			},
+			{
+				Name:        "daemon",
+				Action:      doDaemon,
+				Description: "Runs import and prune commands continuously",
+				Flags: []cli.Flag{
+					&cli.PathFlag{
+						Name:     "import-path",
+						Usage:    "directory or replay path to import",
+						Required: true,
+						Aliases:  []string{"p"},
+					},
+					&cli.Int64Flag{
+						Name:        "time-period",
+						Usage:       "time to wait between runs",
+						Required:    true,
+						DefaultText: "unset",
+						Aliases:     []string{"t"},
 					},
 				},
 			},
