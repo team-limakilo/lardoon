@@ -30,26 +30,39 @@ func ImportPath(path string) error {
 		return err
 	}
 
-	if stat.IsDir() {
-		return filepath.Walk(path, func(path string, info os.FileInfo, err error) error {
+	if !stat.Mode().IsRegular() {
+		entries, err := os.ReadDir(path)
+		if err != nil {
+			return err
+		}
+
+		for _, entry := range entries {
+			info, err := entry.Info()
 			if err != nil {
-				return err
+				continue
 			}
+
+			path := filepath.Join(path, entry.Name())
 
 			if info.Size() == 0 {
 				log.Printf("Skipping empty file %v", path)
-				return nil
+				continue
 			}
 
-			if strings.HasSuffix(path, ".acmi") {
-				err := ImportFile(path)
+			if info.IsDir() {
+				err := ImportPath(path)
 				if err != nil {
-					log.Printf("Failed to process path %v: %v", path, err)
+					return err
+				}
+			} else {
+				if strings.HasSuffix(path, ".acmi") {
+					err := ImportFile(path)
+					if err != nil {
+						log.Printf("Failed to process path %v: %v", path, err)
+					}
 				}
 			}
-
-			return nil
-		})
+		}
 	}
 
 	return ImportFile(path)
