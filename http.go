@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"database/sql"
 	"fmt"
+	"log"
 	"net/http"
 	"path/filepath"
 	"strconv"
@@ -141,6 +142,7 @@ func (h *HTTPServer) downloadReplay(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=%v-%v-%v.acmi", replay.Title, start, end))
 		err := trimTacView(replay.Path, w, start, end)
 		if err != nil {
+			log.Printf("failed to trim tacview: %v", err)
 			gores.Error(w, 400, "failed to trim tacview")
 			return
 		}

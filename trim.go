@@ -2,13 +2,13 @@ package lardoon
 
 import (
 	"io"
-	"os"
 
+	"github.com/b1naryth1ef/jambon"
 	"github.com/b1naryth1ef/jambon/tacview"
 )
 
 func trimTacView(path string, writer io.Writer, start, end int) error {
-	file, err := os.Open(path)
+	file, err := jambon.OpenReadableTacView(path)
 	if err != nil {
 		return err
 	}
