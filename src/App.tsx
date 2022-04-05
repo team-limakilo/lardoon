@@ -17,11 +17,22 @@ export const searchStore = create<
   };
 });
 
+function filesize(size: number) {
+  const sizeMB = size / 1024 / 1024;
+  if (sizeMB >= 100) {
+    return `${Math.round(sizeMB)} MB`;
+  } else if (sizeMB >= 10) {
+    return `${Math.round(sizeMB * 10) / 10} MB`;
+  } else {
+    return `${Math.round(sizeMB * 100) / 100} MB`;
+  }
+}
+
 function ReplayItem({ replay }: { replay: Replay }) {
   const time = new Date(Date.parse(replay.recording_time));
   const measuredTime = new Date(0);
   measuredTime.setSeconds(replay.duration);
-  const parts = replay.path.split("/");
+  const parts = replay.path.replaceAll("\\", "/").split("/");
 
   return (
     <Link
@@ -30,7 +41,7 @@ function ReplayItem({ replay }: { replay: Replay }) {
     >
       <div className="flex flex-row text-lg mb-2">
         {time.toLocaleString()}
-        <span className="ml-auto">{parts[parts.length - 1]}</span>
+        <span className="ml-auto text-right break-words">{parts[parts.length - 1]}</span>
       </div>
       <div className="flex flex-row">
         <a
@@ -51,7 +62,7 @@ function ReplayItem({ replay }: { replay: Replay }) {
           </div>
           <div className="flex flex-row">
             <span className="ml-auto text-gray-800 mr-2">
-              {Math.round(replay.size / 1024 / 1024)} mb
+              {filesize(replay.size)}
             </span>
             <BiHdd className="inline-flex w-5 h-5 text-gray-500" />
             {" "}
@@ -100,12 +111,13 @@ function ReplayList() {
 
   if (!data) return <></>;
   return (
-    <div className="m-auto md:w-1/4 w-full">
+    <div className="m-auto md:max-w-screen-lg w-full">
       <div className="p-2">
         <input
-          className="border border-gray-300 rounded-sm form-input w-full h-8"
+          className="border border-gray-300 rounded-sm form-input w-full h-8 p-2"
           type="text"
           value={search}
+          placeholder="Search by pilot name..."
           onChange={(e) => setSearch(e.target.value)}
         />
       </div>
@@ -113,6 +125,7 @@ function ReplayList() {
         className="border border-gray-300 bg-gray-200 rounded-sm p-2 shadow-sm flex flex-col items-center gap-2 md:m-4"
       >
         {data.map((it) => <ReplayItem key={it.id} replay={it} />)}
+        {data.length === 0 ? "No results" : null}
       </div>
     </div>
   );
@@ -121,7 +134,7 @@ function ReplayList() {
 function App() {
   return (
     <div
-      className="flex h-screen w-screen"
+      className="flex h-screen"
     >
       <Switch>
         <Route exact path="/" component={ReplayList} />

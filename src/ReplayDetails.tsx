@@ -128,13 +128,14 @@ export default function ReplayDetails({ replayId }: { replayId: number }) {
   if (!selectedObjects || !replay) return <></>;
 
   return (
-    <div className="flex flex-col h-full mx-auto md:w-1/3 w-full">
+    <div className="flex flex-col h-full m-auto md:max-w-screen-lg w-full">
       <ReplayDescription replay={replay} />
       <div className="p-2 flex flex-row gap-1">
         <input
-          className="border border-gray-300 rounded-sm form-input w-full h-8 p-0.5"
+          className="border border-gray-300 rounded-sm form-input w-full h-8 p-2"
           type="text"
           value={search}
+          placeholder="Search by pilot name..."
           onChange={(e) => setSearch(e.target.value)}
         />
         <Link
@@ -160,7 +161,8 @@ export default function ReplayDetails({ replayId }: { replayId: number }) {
             setActive={() =>
               objectId === it.id ? setObjectId(null) : setObjectId(it.id)}
           />
-        ))}
+          ))}
+          {selectedObjects.length === 0 ? "No Results" : null}
       </div>
     </div>
   );
