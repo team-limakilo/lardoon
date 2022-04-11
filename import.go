@@ -13,7 +13,7 @@ import (
 	"github.com/b1naryth1ef/jambon/tacview"
 )
 
-var nonHumanSlotRe = regexp.MustCompile(`([A-Z\d]+)#\d\d\d-\d\d`)
+var nonHumanSlotRe = regexp.MustCompile(`(.+)#\d\d\d-\d\d`)
 
 type objectData struct {
 	Id            uint64
