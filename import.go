@@ -63,6 +63,8 @@ func ImportPath(path string) error {
 				}
 			}
 		}
+
+		return nil
 	}
 
 	return ImportFile(path)
