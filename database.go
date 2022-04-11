@@ -63,8 +63,12 @@ type ReplayWithObjects struct {
 	Objects []*ReplayObject `json:"objects"`
 }
 
-func createReplayObject(replayId int, objectId int, types string, name string, pilot string, createdOffset int, deletedOffset int) error {
-	_, err := db.Exec(`
+func beginTransaction() (*sql.Tx, error) {
+	return db.Begin()
+}
+
+func createReplayObject(tx *sql.Tx, replayId int, objectId int, types string, name string, pilot string, createdOffset int, deletedOffset int) error {
+	_, err := tx.Exec(`
 		INSERT INTO replay_objects VALUES (?, ?, ?, ?, ?, ?, ?)
 		ON CONFLICT (replay_id, object_id) DO UPDATE
 			SET types = EXCLUDED.types, name = EXCLUDED.name, pilot = EXCLUDED.pilot, created_offset = EXCLUDED.created_offset, deleted_offset = EXCLUDED.deleted_offset
@@ -72,13 +76,13 @@ func createReplayObject(replayId int, objectId int, types string, name string, p
 	return err
 }
 
-func setReplayDuration(replayId, duration int) error {
-	_, err := db.Exec(`UPDATE replays SET duration=? WHERE id=?`, duration, replayId)
+func setReplayDuration(tx *sql.Tx, replayId, duration int) error {
+	_, err := tx.Exec(`UPDATE replays SET duration=? WHERE id=?`, duration, replayId)
 	return err
 }
 
-func createReplay(path string, referenceTime string, recordingTime string, title string, dataSource string, dataRecorder string, size int) (int, error) {
-	row, err := db.Query(`SELECT id, duration, size FROM replays WHERE path=?`, path)
+func createReplay(tx *sql.Tx, path string, referenceTime string, recordingTime string, title string, dataSource string, dataRecorder string, size int) (int, error) {
+	row, err := tx.Query(`SELECT id, duration, size FROM replays WHERE path=?`, path)
 	if err != nil {
 		return -1, err
 	}
@@ -97,7 +101,7 @@ func createReplay(path string, referenceTime string, recordingTime string, title
 			return -1, nil
 		}
 
-		_, err = db.Exec(
+		_, err = tx.Exec(
 			`UPDATE replays SET path=?, reference_time=?, recording_time=?, title=?, data_source=?, data_recorder=?, size=? WHERE id=?`,
 			path, referenceTime, recordingTime, title, dataSource, dataRecorder, size, id,
 		)
@@ -106,7 +110,7 @@ func createReplay(path string, referenceTime string, recordingTime string, title
 		row.Close()
 	}
 
-	row, err = db.Query(`
+	row, err = tx.Query(`
 		INSERT INTO replays (path, reference_time, recording_time, title, data_source, data_recorder, size) VALUES (?, ?, ?, ?, ?, ?, ?)
 		RETURNING id
 	`, path, referenceTime, recordingTime, title, dataSource, dataRecorder, size)

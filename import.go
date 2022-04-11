@@ -114,7 +114,14 @@ func ImportFile(target string) error {
 		return fmt.Errorf("Malformed Tacview file: missing property: DataRecorder")
 	}
 
+	tx, err := beginTransaction()
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback()
+
 	replayId, err := createReplay(
+		tx,
 		target,
 		reader.Header.ReferenceTime.String(),
 		recordingTime.Value,
@@ -160,6 +167,7 @@ func ImportFile(target string) error {
 				if object.Deleted && exists {
 					objects[object.Id].DeletedOffset = int(tf.Offset)
 					err := createReplayObject(
+						tx,
 						replayId,
 						int(object.Id),
 						objects[object.Id].Types,
@@ -214,6 +222,7 @@ func ImportFile(target string) error {
 	<-done
 	for _, object := range objects {
 		err := createReplayObject(
+			tx,
 			replayId,
 			int(object.Id),
 			object.Types,
@@ -230,5 +239,10 @@ func ImportFile(target string) error {
 		return err
 	}
 
-	return setReplayDuration(replayId, lastFrame-firstFrame)
+	err = setReplayDuration(tx, replayId, lastFrame-firstFrame)
+	if err != nil {
+		return err
+	}
+
+	return tx.Commit()
 }
