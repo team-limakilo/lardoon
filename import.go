@@ -37,12 +37,23 @@ func ImportPath(path string) error {
 		}
 
 		for _, entry := range entries {
-			info, err := entry.Info()
+			path := filepath.Join(path, entry.Name())
+
+			// Because Windows only updates file sizes on a CloseHandle() call, we need to open and then close the file
+			// to get the real size of a file that might still being written to, otherwise it might return 0kb.
+			// See: https://devblogs.microsoft.com/oldnewthing/20111226-00/?p=8813
+			file, err := os.Open(path)
 			if err != nil {
+				log.Printf("Cannot open file %v", path)
 				continue
 			}
+			file.Close()
 
-			path := filepath.Join(path, entry.Name())
+			info, err := os.Stat(path)
+			if err != nil {
+				log.Printf("Cannot Stat() file %v", path)
+				continue
+			}
 
 			if info.Size() == 0 {
 				log.Printf("Skipping empty file %v", path)
