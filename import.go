@@ -112,7 +112,8 @@ func ImportFile(target string) error {
 
 	title := rootObject.Get("Title")
 	if title == nil {
-		return fmt.Errorf("Malformed Tacview file: missing property Title")
+		log.Printf("Warning: missing property Title, using empty string as default")
+		title = &tacview.Property{Key: "Title", Value: ""}
 	}
 
 	dataSource := rootObject.Get("DataSource")
