@@ -60,8 +60,8 @@ func doDaemon(c *cli.Context) error {
 
 func main() {
 	app := &cli.App{
-		Name:        "lardoon",
-		Description: "tacview repository",
+		Name:  "lardoon",
+		Usage: "ACMI repository and trimming service",
 		Flags: []cli.Flag{
 			&cli.PathFlag{
 				Name:    "db",
@@ -69,6 +69,10 @@ func main() {
 				Value:   "lardoon.db",
 				EnvVars: []string{"LARDOON_DB_PATH"},
 			},
+		},
+		Action: func(ctx *cli.Context) error {
+			cli.ShowAppHelp(ctx)
+			return cli.Exit("", 2)
 		},
 		Commands: []*cli.Command{
 			{
