@@ -2,6 +2,8 @@ module github.com/b1naryth1ef/lardoon
 
 go 1.17
 
+replace github.com/b1naryth1ef/jambon => ./jambon
+
 require (
 	github.com/alioygur/gores v1.2.2
 	github.com/b1naryth1ef/jambon v0.0.4-0.20210926054745-d4e6f69369a1
