@@ -204,9 +204,16 @@ func (h *HTTPServer) listReplays(w http.ResponseWriter, r *http.Request) {
 	gores.JSON(w, 200, replays)
 }
 
+func serveIndex(server *HTTPServer) func(w http.ResponseWriter, r *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
+		server.serveEmbeddedFile("index.html", w, r)
+	}
+}
+
 func (h *HTTPServer) Run(bind string) error {
 	r := chi.NewRouter()
 	r.Use(middleware.Logger)
+	r.Use(middleware.GetHead)
 	r.Use(cors.Handler(cors.Options{
 		AllowedOrigins:   []string{"https://*", "http://*"},
 		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
@@ -215,13 +222,13 @@ func (h *HTTPServer) Run(bind string) error {
 		MaxAge:           300,
 	}))
 
-	r.Get("/*", func(w http.ResponseWriter, r *http.Request) {
-		h.serveEmbeddedFile("index.html", w, r)
-	})
+	r.Get("/", serveIndex(h))
+	r.Get("/replay/*", serveIndex(h))
 	r.Get("/static/*", h.serveEmbeddedStaticAssets)
 	r.Get("/api/replay", h.listReplays)
 	r.Get("/api/replay/{id}", h.getReplay)
 	r.Get("/api/replay/{id}/download", h.downloadReplay)
 
+	log.Printf("Serving Lardoon on http://%v", bind)
 	return http.ListenAndServe(bind, r)
 }
